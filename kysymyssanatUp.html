@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kysymyssanat — vihkopeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FBF7EC;
+    --paper-line: #E4DCC5;
+    --ink: #1D2B4F;
+    --ink-soft: #4A5578;
+    --muted: #8A8272;
+    --highlighter: #FFE45E;
+    --highlighter-edge: #F5D000;
+    --tape: #EAF2FF;
+    --tape-edge: #B9D3F5;
+    --good: #2F8F46;
+    --good-bg: #E4F5E6;
+    --bad: #C1442E;
+    --bad-bg: #FBE6E1;
+    --card: #FFFFFF;
+    --shadow: rgba(29, 43, 79, 0.14);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #1B1B22;
+      --paper-line: #2C2C36;
+      --ink: #F1EEE4;
+      --ink-soft: #C9C4D6;
+      --muted: #8D889C;
+      --highlighter: #7A6A1F;
+      --highlighter-edge: #A98F1E;
+      --tape: #22314A;
+      --tape-edge: #33507A;
+      --good: #4CB868;
+      --good-bg: #17301F;
+      --bad: #E06A56;
+      --bad-bg: #3A1E1A;
+      --card: #24242E;
+      --shadow: rgba(0, 0, 0, 0.45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1B1B22;
+    --paper-line: #2C2C36;
+    --ink: #F1EEE4;
+    --ink-soft: #C9C4D6;
+    --muted: #8D889C;
+    --highlighter: #7A6A1F;
+    --highlighter-edge: #A98F1E;
+    --tape: #22314A;
+    --tape-edge: #33507A;
+    --good: #4CB868;
+    --good-bg: #17301F;
+    --bad: #E06A56;
+    --bad-bg: #3A1E1A;
+    --card: #24242E;
+    --shadow: rgba(0, 0, 0, 0.45);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+
+  body {
+    background:
+      repeating-linear-gradient(
+        var(--paper) 0px,
+        var(--paper) 35px,
+        var(--paper-line) 36px
+      );
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sheet { width: 100%; max-width: 620px; position: relative; }
+
+  .binding {
+    position: absolute; left: -6px; top: 18px; bottom: 18px; width: 14px;
+    display: flex; flex-direction: column; justify-content: space-evenly; z-index: 0;
+  }
+  .binding span {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--paper); border: 2px solid var(--paper-line);
+  }
+
+  header { text-align: center; margin-bottom: 18px; padding-left: 14px; }
+  header h1 {
+    font-family: 'Kalam', cursive; font-size: 2.5rem; margin: 0; line-height: 1;
+    color: var(--ink); transform: rotate(-1deg);
+  }
+  header h1 mark {
+    background: var(--highlighter); color: inherit; padding: 0 8px;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
+  }
+  header p { font-family: 'Kalam', cursive; color: var(--muted); font-size: 1.05rem; margin: 6px 0 0; }
+
+  .card {
+    background: var(--card); border-radius: 18px; box-shadow: 0 10px 30px var(--shadow);
+    padding: 26px 22px 24px; margin-left: 14px; position: relative;
+  }
+
+  .start-copy { font-size: 0.98rem; color: var(--ink-soft); line-height: 1.55; margin: 0 0 22px; }
+  .start-copy b { color: var(--ink); }
+
+  .big-btn {
+    width: 100%; padding: 16px; border-radius: 14px; border: none;
+    background: var(--ink); color: var(--paper); font-family: 'Inter', sans-serif;
+    font-weight: 800; font-size: 1.05rem; cursor: pointer; letter-spacing: 0.2px;
+  }
+  .big-btn:active { transform: scale(0.99); }
+
+  .best-score { text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px; font-size: 0.85rem; color: var(--muted); font-weight: 600;
+  }
+  .progress-track {
+    flex: 1; height: 8px; background: var(--paper-line); border-radius: 6px;
+    margin: 0 12px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--highlighter-edge); border-radius: 6px; transition: width 0.25s ease; }
+  .score-badge {
+    background: var(--tape); border: 2px solid var(--tape-edge); border-radius: 10px;
+    padding: 4px 10px; font-weight: 800; color: var(--ink); white-space: nowrap;
+  }
+
+  .sentence-wrap { text-align: center; padding: 26px 10px 30px; }
+  .sentence { font-size: 1.5rem; line-height: 1.5; color: var(--ink); font-weight: 600; }
+  .blank-slot {
+    display: inline-block; min-width: 92px; padding: 2px 10px;
+    background: var(--highlighter); border-radius: 6px; margin: 0 2px;
+    color: transparent; position: relative;
+  }
+  .blank-slot.filled { color: var(--ink); }
+  .blank-slot.correct { background: var(--good-bg); outline: 2px solid var(--good); }
+  .blank-slot.wrong { background: var(--bad-bg); outline: 2px solid var(--bad); }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opt-btn {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1rem;
+    padding: 15px 8px; border-radius: 12px; border: 2px solid var(--paper-line);
+    background: var(--paper); color: var(--ink); cursor: pointer;
+    transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt-btn:hover:not(:disabled) { border-color: var(--ink-soft); transform: translateY(-1px); }
+  .opt-btn:disabled { cursor: default; }
+  .opt-btn.correct { background: var(--good-bg); border-color: var(--good); color: var(--good); }
+  .opt-btn.wrong { background: var(--bad-bg); border-color: var(--bad); color: var(--bad); }
+  .opt-btn.dim { opacity: 0.5; }
+
+  .feedback-row {
+    min-height: 28px; text-align: center; margin: 14px 0 4px;
+    font-family: 'Kalam', cursive; font-size: 1.1rem; line-height: 1.4;
+  }
+  .feedback-row.good { color: var(--good); }
+  .feedback-row.bad { color: var(--bad); }
+
+  .next-wrap { margin-top: 10px; }
+
+  .end-emoji { text-align: center; font-size: 3rem; margin-bottom: 6px; }
+  .end-title { font-family: 'Kalam', cursive; text-align: center; font-size: 1.8rem; margin: 0 0 4px; }
+  .end-sub { text-align: center; color: var(--muted); margin: 0 0 22px; font-size: 0.95rem; }
+  .stat-row { display: flex; justify-content: space-around; margin-bottom: 24px; }
+  .stat { text-align: center; }
+  .stat .num { font-size: 1.9rem; font-weight: 800; color: var(--ink); display: block; }
+  .stat .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .miss-list {
+    max-height: 220px; overflow-y: auto; border-top: 1px solid var(--paper-line);
+    padding-top: 12px; margin-bottom: 20px;
+  }
+  .miss-item {
+    font-size: 0.86rem; padding: 7px 0; border-bottom: 1px dashed var(--paper-line); color: var(--ink-soft);
+  }
+  .miss-item b { color: var(--good); }
+  .end-btns { display: grid; gap: 10px; }
+
+  .hidden { display: none !important; }
+
+  footer.note { text-align: center; color: var(--muted); font-size: 0.75rem; margin-top: 16px; padding-left: 14px; }
+
+  @media (max-width: 380px) {
+    header h1 { font-size: 2rem; }
+    .sentence { font-size: 1.25rem; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="binding" aria-hidden="true">
+    <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+  </div>
+
+  <header>
+    <h1>Kysymys<mark>sanat</mark></h1>
+    <p>täytä aukko oikealla sanalla</p>
+  </header>
+
+  <div class="card" id="startScreen">
+    <p class="start-copy">Kaikki kysymykset tässä pelissä ovat suoraan <b>sinun omista vihkosivuistasi</b> — ei muualta. Joka kierroksella saat <b>10 satunnaista kysymystä sekaisin</b>: mitä, mikä, missä, milloin, kenen, kuinka monta... sekä onko/puhutko-tyyppisiä kysymyksiä.</p>
+    <button class="big-btn" id="startBtn">Aloita peli (10 kysymystä)</button>
+    <div class="best-score" id="bestScoreLine"></div>
+  </div>
+
+  <div class="card hidden" id="gameScreen">
+    <div class="topbar">
+      <span id="qCounter">Kysymys 1/10</span>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="score-badge" id="scoreBadge">0 p.</span>
+    </div>
+
+    <div class="sentence-wrap">
+      <div class="sentence" id="sentenceText"></div>
+    </div>
+
+    <div class="options" id="optionsGrid"></div>
+
+    <div class="feedback-row" id="feedbackRow"></div>
+
+    <div class="next-wrap">
+      <button class="big-btn hidden" id="nextBtn">Seuraava →</button>
+    </div>
+  </div>
+
+  <div class="card hidden" id="endScreen">
+    <div class="end-emoji" id="endEmoji">🎉</div>
+    <div class="end-title" id="endTitle">Hienoa työtä!</div>
+    <p class="end-sub" id="endSub"></p>
+
+    <div class="stat-row">
+      <div class="stat"><span class="num" id="statCorrect">0</span><span class="lbl">Oikein</span></div>
+      <div class="stat"><span class="num" id="statPct">0%</span><span class="lbl">Tarkkuus</span></div>
+      <div class="stat"><span class="num" id="statBest">0</span><span class="lbl">Ennätys</span></div>
+    </div>
+
+    <div class="miss-list hidden" id="missList"></div>
+
+    <div class="end-btns">
+      <button class="big-btn" id="playAgainBtn">Pelaa uudelleen (uudet 10)</button>
+    </div>
+  </div>
+
+  <footer class="note">Sinun omista suomen kielen vihkoistasi koottu peli · onnea opiskeluun!</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const FIXED_LEN = 10;
+
+  /* Every sentence below comes directly from the user's own workbook photos. */
+  const WORD_QUESTIONS_RAW = [
+    ["Anteeksi, ___ tämä on?","Mikä"],
+    ["___ se maksaa?","Mitä"],
+    ["___ tämä maksaa?","Mitä"],
+    ["___ sinä kysyt?","Mitä"],
+    ["___ Katja on?","Minkämaalainen"],
+    ["___ te etsitte?","Mitä"],
+    ["___ sinä olet?","Minkämaalainen"],
+    ["___ te istutte?","Missä"],
+    ["___ Atsuko ja Keiko istuvat?","Missä"],
+    ["___ sinä olet?","Kuka"],
+    ["___ hän on?","Kuka"],
+    ["___ kieltä sinä puhut?","Mitä"],
+    ["___ kieltä Tanja puhuu?","Mitä"],
+    ["___ kieltä sinä puhut?","Kuinka monta"],
+    ["___ kieltä te puhutte?","Mitä"],
+    ["___ kuuluu?","Mitä"],
+    ["___ tämä on?","Mikä"],
+    ["___ sinä etsit?","Mitä"],
+    ["___ kello on?","Mitä"],
+    ["___ aikaan sinä tulet?","Mihin"],
+    ["___ sinä tulet?","Milloin"],
+    ["___ tämä tarkoittaa?","Mitä"],
+    ["___ ilma siellä on?","Millainen"],
+    ["___ te menette?","Mihin"],
+    ["___ sinä olit?","Missä"],
+    ["___ hän on kotoisin?","Mistä"],
+    ["___ sinä tulet työhön?","Millä"],
+    ["___ tuolia täällä on?","Kuinka monta"],
+    ["___ koulu alkaa?","Milloin"],
+    ["___ sinä säästät rahaa?","Miksi"],
+    ["___ te istutte lounastauolla?","Missä"],
+    ["___ koulun rehtori on?","Kuka"],
+    ["___ hän matkustaa?","Mihin"],
+    ["___ sinun sukunimi on?","Mikä"],
+    ["___ sää tänään on?","Millainen"],
+    ["___ sinä menet kouluun?","Millä"],
+    ["___ opiskelijaa luokassa on?","Kuinka monta"],
+    ["___ me sanomme aamulla?","Mitä"],
+    ["___ sinä asut?","Missä"],
+    ["___ sana sanotaan?","Miten"],
+    ["___ Kaisa menee?","Mihin"],
+    ["___ sinun äidinkieli on?","Mikä"],
+    ["___ on Suomen presidentti?","Kuka"],
+    ["___ kanssa hän puhuu?","Kenen"],
+    ["___ vanha sinä olet?","Kuinka"],
+    ["___ sinä olet kotoisin?","Mistä"],
+    ["___ päivä tänään on?","Mikä"],
+    ["___ sinun kotimaa on?","Minkälainen"],
+    ["___ puhelin on?","Missä"],
+    ["___ mikrotietokone ja tulostin ovat?","Missä"],
+    ["___ huonetta täällä on?","Kuinka monta"],
+    ["___ kerrosta täällä on?","Kuinka monta"],
+    ["___ pöytää täällä on?","Kuinka monta"],
+    ["___ sinä opiskelet suomea?","Missä"],
+    ["___ sinä menet tiistaina?","Mihin"],
+    ["___ kurssi alkaa ja loppuu?","Milloin"],
+    ["___ sinä opiskelet ruotsia?","Miksi"],
+    ["___ sinä sanot?","Mitä"],
+    ["___ te asutte?","Missä"],
+    ["___ sinun nimi on?","Mikä"],
+    ["___ sinun nimi kirjoitetaan?","Miten"],
+    ["___ sinä opiskelet?","Missä"],
+    ["___ sinä opiskelet?","Mitä"],
+    ["___ sinun opettaja on?","Kuka"],
+    ["___ sinun puhelinnumero on?","Mikä"],
+    ["___ sinun kotikaupunki on?","Mikä"],
+    ["___ koulupäivä alkaa?","Milloin"],
+    ["___ kahvitauko on?","Milloin"],
+    ["___ pitkä kahvitauko on?","Kuinka"],
+    ["___ viikonloppu alkaa?","Milloin"],
+    ["___ pitkä viikonloppu on?","Kuinka"],
+    ["___ meillä on testi?","Milloin"],
+    ["___ me olemme arkipäivisin?","Missä"],
+    ["___ on viikonloppu?","Milloin"],
+    ["___ aikaan kurssi alkaa?","Mihin"],
+    ["___ kurssi alkaa?","Monelta"],
+    ["___ sinä opiskelet tällä kurssilla?","Miksi"],
+    ["___ tämä kurssi on?","Millainen"],
+    ["___ hyvin sinä puhut suomea?","Miten"],
+    ["___ sinun työ on?","Mikä"],
+    ["___ sinun kännykkä on?","Missä"],
+    ["___ sinun osoite on?","Mikä"],
+    ["___ kauan sinä olet opiskellut suomea?","Kuinka"],
+    ["___ aikaan sinä syöt lounasta?","Mihin"],
+    ["___ aikaan sinä heräät aamulla?","Mihin"],
+    ["___ tuntia sinä nukut?","Kuinka monta"],
+    ["___ sinä teet illalla?","Mitä"],
+    ["___ aikaan sinä menet nukkumaan?","Mihin"],
+    ["___ tämä kurssi on?","Minkälainen"],
+    ["___ sinä tulit Suomeen?","Miksi"],
+    ["___ sinulle kuuluu?","Mitä"],
+    ["___ sinun henkilötunnus on?","Mikä"],
+    ["___ sinä menet koulun jälkeen?","Mihin"],
+    ["___ sinä tulit Suomeen?","Milloin"],
+    ["___ kieltä et puhu?","Mitä"],
+    ["___ auto on ulkona?","Kenen"],
+    ["___ sinä tulet kouluun?","Millä"],
+    ["___ sinä syöt illalla?","Milloin"],
+    ["___ tämä kirja maksaa?","Mitä"],
+    ["___ te teette huomenna?","Mitä"],
+    ["___ te teette ylihuomenna?","Mitä"],
+    ["___ sinä olit eilen?","Missä"],
+    ["___ sinä olit toissapäivänä?","Missä"],
+    ["___ päivä huomenna on?","Mikä"],
+    ["___ Kaisa tulee?","Milloin"],
+    ["___ sinä menet huomenna?","Mihin"],
+    ["___ sinä menet teatteriin?","Milloin"],
+    ["___ sinä itket?","Miksi"],
+    ["___ kirja on?","Kenelle"],
+    ["___ he puhuvat?","Mistä"],
+    ["___ hän tulee huomenna?","Milloin"],
+    ["___ olet syntynyt?","Milloin"],
+    ["___ aikaan posti tulee?","Mihin"],
+    ["___ lehti tulee?","Milloin"],
+    ["___ aikaan Kaisa tulee?","Mihin"]
+  ];
+
+  const VERB_QUESTIONS_RAW = [
+    ["___ hän ruotsia?","Puhuuko"],
+    ["___ sinä suomea?","Puhutko"],
+    ["___ te hyvin suomea?","Puhutteko"],
+    ["___ sinulla perhe?","Onko"],
+    ["___ sinulla työpaikka?","Onko"],
+    ["___ sinulla asunto vai talo?","Onko"],
+    ["___ sinä lapsi vai aikuinen?","Oletko"],
+    ["___ viikonloppu tiistain jälkeen?","Onko"],
+    ["___ kurssi kello 10?","Alkaako"],
+    ["___ tänään torstai?","Onko"],
+    ["___ sinä espanjaa?","Puhutko"],
+    ["___ sinä Ähtärissä?","Asutko"],
+    ["___ kotoisin Brasiliasta?","Oletko"],
+    ["___ tämä kurssi hyvä?","Onko"],
+    ["___ sinä koulun jälkeen kotiin?","Menetkö"],
+    ["___ suomea?","Ymmärrätkö"],
+    ["___ viikonloppuna suomea?","Opiskeletko"],
+    ["___ paljon TV:tä?","Katsotko"],
+    ["___ työssä?","Oletko"],
+    ["___ englantia?","Puhutko"],
+    ["___ iloinen vai surullinen?","Oletko"],
+    ["___ hyvin englantia?","Puhutko"],
+    ["___ sinulla koira?","Onko"]
+  ];
+
+  const WORD_BANK = ["Kuka","Mikä","Mitä","Missä","Mistä","Mihin","Milloin","Monelta","Miksi","Miten","Kuinka","Kuinka monta","Kenen","Kenelle","Millainen","Minkälainen","Minkämaalainen","Millä"];
+  const VERBKO_BANK = ["Puhuuko","Puhutko","Puhutteko","Onko","Oletko","Alkaako","Asutko","Menetkö","Ymmärrätkö","Opiskeletko","Katsotko"];
+  const SYN_GROUPS = [["Millainen","Minkälainen"]];
+
+  // Short, beginner-friendly explanation of what each question word actually asks for.
+  const EXPLANATIONS = {
+    "Kuka": "kysytään ihmisestä, kuka joku on (who).",
+    "Mikä": "kysytään asian nimeä tai mikä jokin on (what/which — asia on lauseen subjekti).",
+    "Mitä": "kysytään tekemistä, puhuttavaa kieltä tai kohdetta (what — asia on lauseen objekti).",
+    "Missä": "kysytään paikkaa, jossa jokin on tai tapahtuu (where — \"olla jossakin\").",
+    "Mistä": "kysytään mistä paikasta tullaan tai mistä asiasta puhutaan (from where / about what).",
+    "Mihin": "kysytään suuntaa, minne jotain mennään tai mihin aikaan (to where / at what time).",
+    "Milloin": "kysytään yleistä ajankohtaa, esim. päivää tai hetkeä (when).",
+    "Monelta": "kysytään tarkkaa kellonaikaa (at what o'clock).",
+    "Miksi": "kysytään syytä, miksi jotain tehdään (why).",
+    "Miten": "kysytään tapaa, jolla jokin tehdään tai sanotaan (how / in what way).",
+    "Kuinka": "kysytään astetta tai määrää, esim. ikää tai kestoa (how — kuinka vanha, kuinka pitkä).",
+    "Kuinka monta": "kysytään lukumäärää (how many).",
+    "Kenen": "kysytään omistajaa, kenen jokin on (whose).",
+    "Kenelle": "kysytään vastaanottajaa, kenelle jokin kuuluu tai annetaan (to whom).",
+    "Millainen": "kysytään ominaisuutta tai laatua (what kind of).",
+    "Minkälainen": "kysytään ominaisuutta tai laatua, sama kuin \"millainen\" (what kind of).",
+    "Minkämaalainen": "kysytään kansallisuutta (what nationality).",
+    "Millä": "kysytään välinettä tai tapaa, jolla jotain tehdään (by what means)."
+  };
+  const VERBKO_EXPLANATION = "tämä on kyllä/ei-kysymys: lause alkaa verbillä, johon on liitetty pääte -ko tai -kö.";
+
+  function explanationFor(q){
+    if (q.type === "verbko") return VERBKO_EXPLANATION;
+    return EXPLANATIONS[q.answer] || "";
+  }
+
+  const QUESTIONS = WORD_QUESTIONS_RAW.map(function(r){
+    return { sentence: r[0], answer: r[1], type: "word" };
+  }).concat(VERB_QUESTIONS_RAW.map(function(r){
+    return { sentence: r[0], answer: r[1], type: "verbko" };
+  }));
+
+  function synonymsOf(word){
+    for (const g of SYN_GROUPS) { if (g.includes(word)) return g; }
+    return [word];
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function buildOptions(q){
+    const pool = q.type === "verbko" ? VERBKO_BANK : WORD_BANK;
+    const exclude = q.type === "verbko" ? [q.answer] : synonymsOf(q.answer);
+    const candidates = pool.filter(function(w){ return !exclude.includes(w); });
+    const distractors = shuffle(candidates).slice(0, 3);
+    return shuffle(distractors.concat([q.answer]));
+  }
+
+  let session = [];
+  let idx = 0;
+  let score = 0;
+  let missed = [];
+  let locked = false;
+
+  const startScreen = document.getElementById('startScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const endScreen = document.getElementById('endScreen');
+  const startBtn = document.getElementById('startBtn');
+  const bestScoreLine = document.getElementById('bestScoreLine');
+
+  const qCounter = document.getElementById('qCounter');
+  const progressFill = document.getElementById('progressFill');
+  const scoreBadge = document.getElementById('scoreBadge');
+  const sentenceText = document.getElementById('sentenceText');
+  const optionsGrid = document.getElementById('optionsGrid');
+  const feedbackRow = document.getElementById('feedbackRow');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const endEmoji = document.getElementById('endEmoji');
+  const endTitle = document.getElementById('endTitle');
+  const endSub = document.getElementById('endSub');
+  const statCorrect = document.getElementById('statCorrect');
+  const statPct = document.getElementById('statPct');
+  const statBest = document.getElementById('statBest');
+  const missList = document.getElementById('missList');
+  const playAgainBtn = document.getElementById('playAgainBtn');
+
+  function getBest(){
+    try {
+      const v = localStorage.getItem('kysymyssanat_best');
+      return v ? parseInt(v, 10) : 0;
+    } catch(e) { return 0; }
+  }
+  function setBest(v){
+    try { localStorage.setItem('kysymyssanat_best', String(v)); } catch(e) {}
+  }
+  function refreshBestLine(){
+    const best = getBest();
+    bestScoreLine.textContent = best > 0 ? ("Paras tulos: " + best + "/10") : "";
+  }
+  refreshBestLine();
+
+  function startRound(){
+    session = shuffle(QUESTIONS).slice(0, FIXED_LEN);
+    idx = 0; score = 0; missed = [];
+    startScreen.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    renderQuestion();
+  }
+
+  startBtn.addEventListener('click', startRound);
+  playAgainBtn.addEventListener('click', function(){
+    endScreen.classList.add('hidden');
+    startRound();
+  });
+
+  function renderQuestion(){
+    locked = false;
+    const q = session[idx];
+    qCounter.textContent = "Kysymys " + (idx + 1) + "/" + session.length;
+    progressFill.style.width = ((idx) / session.length * 100) + "%";
+    scoreBadge.textContent = score + " p.";
+    feedbackRow.textContent = "";
+    feedbackRow.className = "feedback-row";
+    nextBtn.classList.add('hidden');
+
+    const parts = q.sentence.split("___");
+    sentenceText.innerHTML = parts[0] + '<span class="blank-slot" id="blankSlot">' + q.answer + '</span>' + parts[1];
+
+    const opts = buildOptions(q);
+    optionsGrid.innerHTML = "";
+    opts.forEach(function(opt){
+      const b = document.createElement('button');
+      b.className = 'opt-btn';
+      b.textContent = opt;
+      b.addEventListener('click', function(){ selectAnswer(opt, b, q); });
+      optionsGrid.appendChild(b);
+    });
+  }
+
+  function selectAnswer(opt, btnEl, q){
+    if (locked) return;
+    locked = true;
+    const blank = document.getElementById('blankSlot');
+    const correct = opt === q.answer;
+
+    blank.classList.add('filled');
+    blank.classList.add(correct ? 'correct' : 'wrong');
+
+    Array.from(optionsGrid.children).forEach(function(b){
+      b.disabled = true;
+      if (b.textContent === q.answer) b.classList.add('correct');
+      else if (b === btnEl) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+
+    if (correct) {
+      score++;
+      feedbackRow.textContent = "Oikein! 🎯";
+      feedbackRow.className = "feedback-row good";
+    } else {
+      const why = explanationFor(q);
+      feedbackRow.innerHTML = "Ei ihan — \"" + opt + "\" ei sovi tähän.<br>" +
+        "Oikea sana on <b>" + q.answer + "</b>" + (why ? ": " + why : ".");
+      feedbackRow.className = "feedback-row bad";
+      missed.push({ sentence: q.sentence.replace("___", "＿＿"), answer: q.answer, why: why });
+    }
+
+    scoreBadge.textContent = score + " p.";
+    progressFill.style.width = ((idx + 1) / session.length * 100) + "%";
+
+    nextBtn.classList.remove('hidden');
+    nextBtn.textContent = (idx + 1 < session.length) ? "Seuraava →" : "Katso tulokset →";
+  }
+
+  nextBtn.addEventListener('click', function(){
+    idx++;
+    if (idx < session.length) { renderQuestion(); } else { showEnd(); }
+  });
+
+  function showEnd(){
+    gameScreen.classList.add('hidden');
+    endScreen.classList.remove('hidden');
+
+    const pct = Math.round((score / session.length) * 100);
+    statCorrect.textContent = score + "/" + session.length;
+    statPct.textContent = pct + "%";
+
+    const best = getBest();
+    const newBest = Math.max(best, score);
+    setBest(newBest);
+    statBest.textContent = newBest + "/10";
+
+    if (pct === 100) {
+      endEmoji.textContent = "🏆"; endTitle.textContent = "Täydellistä!";
+      endSub.textContent = "Kaikki kymmenen oikein.";
+    } else if (pct >= 80) {
+      endEmoji.textContent = "🎉"; endTitle.textContent = "Tosi hyvä!";
+      endSub.textContent = "Suurin osa istui heti muistiin.";
+    } else if (pct >= 50) {
+      endEmoji.textContent = "📝"; endTitle.textContent = "Ihan hyvä alku.";
+      endSub.textContent = "Vielä muutama kertaus, niin nämä lentävät.";
+    } else {
+      endEmoji.textContent = "📚"; endTitle.textContent = "Jatka harjoittelua.";
+      endSub.textContent = "Katso alta väärät vastaukset ja yritä uudelleen.";
+    }
+
+    if (missed.length) {
+      missList.classList.remove('hidden');
+      missList.innerHTML = missed.map(function(m){
+        return '<div class="miss-item">' + m.sentence + ' — oikea: <b>' + m.answer + '</b>' +
+          (m.why ? '<br><span style="font-size:0.8em;">' + m.why + '</span>' : '') + '</div>';
+      }).join("");
+    } else {
+      missList.classList.add('hidden');
+      missList.innerHTML = "";
+    }
+    refreshBestLine();
+  }
+
+})();
+</script>
+</body>
+</html>
